@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { CreditCard, Smartphone, QrCode, Building, Banknote, Wallet } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useOrders } from '../hooks/useFirestore';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { useWebsiteSettings } from '../hooks/useSettings';
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
-  const { addOrder } = useOrders();
   const { settings } = useWebsiteSettings();
   const navigate = useNavigate();
 
@@ -89,6 +89,19 @@ const Checkout = () => {
   };
 
   const selectedPaymentMethod = paymentMethods.find(method => method.id === formData.paymentMethod);
+
+  const addOrder = async (orderData: any) => {
+    try {
+      const docRef = await addDoc(collection(db, 'orders'), {
+        ...orderData,
+        createdAt: Timestamp.now()
+      });
+      console.log('Order added with ID:', docRef.id);
+    } catch (error) {
+      console.error('Error adding order:', error);
+      throw error;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
